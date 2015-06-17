@@ -69,7 +69,7 @@ function is_closer_to(point_a, point_b, target_point) =
 
 function triangles_between_edges(
     edge_a, edge_b, a_offset, b_offset,
-    a_at, b_at, a_end, b_end, finish
+    a_at, b_at, a_end, b_end, a_finished, b_finished
 ) =
     let (
         next_a_at = (a_at + 1) % len(edge_a),
@@ -82,11 +82,11 @@ function triangles_between_edges(
                 b_offset + b_at,
                 b_offset + next_b_at
             ]],
-            finish ? [] :
+            b_finished ? [] :
                 triangles_between_edges(
                     edge_a, edge_b, a_offset, b_offset,
                     a_at, next_b_at, a_end, b_end,
-                    next_b_at == b_end
+                    a_finished, next_b_at == b_end
                 )
         )
     :
@@ -96,11 +96,11 @@ function triangles_between_edges(
                 b_offset + b_at,
                 a_offset + next_a_at
             ]],
-            finish ? [] :
+            a_finished ? [] :
                 triangles_between_edges(
                     edge_a, edge_b, a_offset, b_offset,
                     next_a_at, b_at, a_end, b_end,
-                    next_a_at == a_end
+                    next_a_at == a_end, b_finished
                 )
         )
     ;
@@ -112,7 +112,7 @@ function wall_between_edges(edge_a, edge_b, a_offset, b_offset) =
     ) triangles_between_edges(
         edge_a, edge_b, a_offset, b_offset,
         0, first_b_at, 0, first_b_at,
-        false
+        false, false
     );
 
 function wall_between_planes(a, b) =

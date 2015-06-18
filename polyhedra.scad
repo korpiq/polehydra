@@ -80,7 +80,8 @@ function lib_polehydra_triangles_between_edges(
         )
     ;
 
-function lib_polehydra__wall_between_edges(edge_a, edge_b, a_offset, b_offset) =
+function lib_polehydra__wall_between_edges
+        (edge_a, edge_b, a_offset, b_offset) =
     let (
         first_b_at =
             lib_polehydra_index_of_smallest
@@ -91,14 +92,56 @@ function lib_polehydra__wall_between_edges(edge_a, edge_b, a_offset, b_offset) =
         false, false
     );
 
-bottom = lib_polehydra_points_on_arc(5, 3, 0);
-top = lib_polehydra_points_on_arc(3, 9, 9);
-all_points_3d = concat(bottom, top);
-wall = lib_polehydra__wall_between_edges(bottom, top, 0, len(bottom));
-all_faces = concat(
-    lib_polehydra_connect_points(bottom, 0),
-    wall,
-    lib_polehydra_connect_points(top, len(bottom))
-);
+function lib_polehydra__walls_between_edges
+        (edges, first_edge = 0, offset = 0) =
+    first_edge > len(edges) - 2 ? [] :
+    let (
+        next_offset = offset + len(edges[first_edge])
+    ) concat(
+        lib_polehydra__wall_between_edges
+            (edges[first_edge], edges[first_edge + 1],
+                offset, next_offset),
+        lib_polehydra__walls_between_edges
+            (edges, first_edge + 1, next_offset)
+    );
 
-polyhedron(all_points_3d, all_faces);
+function lib_polehydra__lens(edges, at = 0) =
+    at < len(edges) ?
+        len(edges[at]) + lib_polehydra__lens(edges, at + 1)
+    : 0;
+
+function lib_polehydra_cover(edges) =
+    let (
+        last = edges[len(edges) - 1],
+        len_to_last = lib_polehydra__lens(edges) - len(last)
+    ) concat(
+        lib_polehydra_connect_points(edges[0], 0),
+        lib_polehydra__walls_between_edges(edges),
+        lib_polehydra_connect_points(last, len_to_last)
+    );
+
+module lib_polehydra_polyhedron_from_edges(edges) {
+    function concat_points_of_all_edges(at = 0) =
+        at < len(edges) ? concat(
+            edges[at],
+            concat_points_of_all_edges(at + 1)
+        ) : [];
+    polyhedron(concat_points_of_all_edges(),
+        lib_polehydra_cover(edges)
+    );
+}
+
+lib_polehydra_polyhedron_from_edges([
+    lib_polehydra_points_on_arc(3, 3, 0),
+    lib_polehydra_points_on_arc(6, 30, 5),
+    lib_polehydra_points_on_arc(6, 30, 6),
+    lib_polehydra_points_on_arc(5, 30, 7),
+    lib_polehydra_points_on_arc(3, 8, 9),
+    lib_polehydra_points_on_arc(3, 6, 12, 15),
+    lib_polehydra_points_on_arc(6, 6, 15),
+    lib_polehydra_points_on_arc(6, 6, 18),
+    lib_polehydra_points_on_arc(5, 6, 18),
+    lib_polehydra_points_on_arc(4, 6, 14),
+    lib_polehydra_points_on_arc(2, 6, 12),
+    lib_polehydra_points_on_arc(2, 6, 3),
+]);

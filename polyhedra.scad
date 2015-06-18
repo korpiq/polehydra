@@ -1,14 +1,15 @@
 
-function point_on_arc(r, degrees, h) = 
-    [ r * sin(degrees), r * cos(degrees), h ];
-
-function points_on_arc(r, total_points, h) =
+function points_on_arc
+    (r, points, height = 0, arc_start = 0, arc_degrees = 360) =
     [
-        for (current_point = [0 : total_points - 1])
-            point_on_arc( r, current_point * 360 / total_points, h )
+        for (current_point = [0 : points - 1])
+            let ( degrees =
+                arc_start + current_point * arc_degrees / points )
+                [ r * sin(degrees), r * cos(degrees), height ]
     ];
 
 function connect_points(points, offset) =
+    points < 3 ? [] :
     [
         concat(
             [for (i = [0 : len(points) - 1]) i + offset],
@@ -46,21 +47,7 @@ function triangles_between_edges(
         next_a_at = (a_at + 1) % len(edge_a),
         next_b_at = (b_at + 1) % len(edge_b)
     )
-    is_closer_to(edge_a[a_at], edge_a[next_a_at], edge_b[next_b_at]) ?
-        concat(
-            [[
-                a_offset + a_at,
-                b_offset + b_at,
-                b_offset + next_b_at
-            ]],
-            b_finished ? [] :
-                triangles_between_edges(
-                    edge_a, edge_b, a_offset, b_offset,
-                    a_at, next_b_at, a_end, b_end,
-                    a_finished, next_b_at == b_end
-                )
-        )
-    :
+    is_closer_to(edge_a[next_a_at], edge_a[a_at], edge_b[next_b_at]) ?
         concat(
             [[
                 a_offset + a_at,
@@ -72,6 +59,20 @@ function triangles_between_edges(
                     edge_a, edge_b, a_offset, b_offset,
                     next_a_at, b_at, a_end, b_end,
                     next_a_at == a_end, b_finished
+                )
+        )
+    :
+        concat(
+            [[
+                a_offset + a_at,
+                b_offset + b_at,
+                b_offset + next_b_at
+            ]],
+            b_finished ? [] :
+                triangles_between_edges(
+                    edge_a, edge_b, a_offset, b_offset,
+                    a_at, next_b_at, a_end, b_end,
+                    a_finished, next_b_at == b_end
                 )
         )
     ;

@@ -110,7 +110,7 @@ function lib_polehydra__lens(edges, at = 0) =
         len(edges[at]) + lib_polehydra__lens(edges, at + 1)
     : 0;
 
-function lib_polehydra_cover(edges) =
+function lib_polehydra_cover_spheroid(edges) =
     let (
         last = edges[len(edges) - 1],
         len_to_last = lib_polehydra__lens(edges) - len(last)
@@ -120,28 +120,47 @@ function lib_polehydra_cover(edges) =
         lib_polehydra_connect_points(last, len_to_last)
     );
 
-module lib_polehydra_polyhedron_from_edges(edges) {
-    function concat_points_of_all_edges(at = 0) =
-        at < len(edges) ? concat(
-            edges[at],
-            concat_points_of_all_edges(at + 1)
-        ) : [];
-    polyhedron(concat_points_of_all_edges(),
-        lib_polehydra_cover(edges)
+function lib_polehydra_cover_toroid(edges) =
+    let (
+        last = edges[len(edges) - 1],
+        len_to_last = lib_polehydra__lens(edges) - len(last)
+    ) concat(
+        lib_polehydra__walls_between_edges(edges),
+        lib_polehydra__wall_between_edges
+            (edges[0], last, 0, len_to_last)
+    );
+
+function lib_polehydra_concat_points_of_all_edges(edges, at = 0) =
+    at < len(edges) ? concat(
+        edges[at],
+        lib_polehydra_concat_points_of_all_edges(edges, at + 1)
+    ) : [];
+
+module lib_polehydra_spheroid(edges) {
+    polyhedron(
+        lib_polehydra_concat_points_of_all_edges(edges),
+        lib_polehydra_cover_spheroid(edges)
     );
 }
 
-lib_polehydra_polyhedron_from_edges([
-    lib_polehydra_points_on_arc(3, 3, 0),
+module lib_polehydra_toroid(edges) {
+    polyhedron(
+        lib_polehydra_concat_points_of_all_edges(edges),
+        lib_polehydra_cover_toroid(edges)
+    );
+}
+
+lib_polehydra_toroid([
+    lib_polehydra_points_on_arc(6, 3, 0),
     lib_polehydra_points_on_arc(6, 30, 5),
     lib_polehydra_points_on_arc(6, 30, 6),
-    lib_polehydra_points_on_arc(5, 30, 7),
+    lib_polehydra_points_on_arc(5.4, 30, 7),
     lib_polehydra_points_on_arc(3, 8, 9),
-    lib_polehydra_points_on_arc(3, 6, 12, 15),
-    lib_polehydra_points_on_arc(6, 6, 15),
-    lib_polehydra_points_on_arc(6, 6, 18),
-    lib_polehydra_points_on_arc(5, 6, 18),
-    lib_polehydra_points_on_arc(4, 6, 14),
+    lib_polehydra_points_on_arc(3, 20, 12, 15),
+    lib_polehydra_points_on_arc(6, 20, 15),
+    lib_polehydra_points_on_arc(6, 20, 18),
+    lib_polehydra_points_on_arc(5, 20, 18),
+    lib_polehydra_points_on_arc(3, 12, 14),
     lib_polehydra_points_on_arc(2, 6, 12),
-    lib_polehydra_points_on_arc(2, 6, 3),
+    lib_polehydra_points_on_arc(3, 3, 0),
 ]);

@@ -30,13 +30,6 @@ function lib_polehydra_distances_squared
                 (source_point, target_points[i])
     ];
 
-function lib_polehydra_index_of_smallest(distances) =
-    let ( smallest_distance = min(distances) )
-    [
-        for (i = [0 : len(distances) - 1])
-            if (distances[i] == smallest_distance) i
-    ][0];
-
 function lib_polehydra__is_closer_to(point_a, point_b, target_point) =
     lib_polehydra__distance_squared(point_a, target_point) <
         lib_polehydra__distance_squared(point_b, target_point);
@@ -83,9 +76,9 @@ function lib_polehydra_triangles_between_edges(
 function lib_polehydra__wall_between_edges
         (edge_a, edge_b, a_offset, b_offset) =
     let (
-        first_b_at =
-            lib_polehydra_index_of_smallest
-                (lib_polehydra_distances_squared(edge_a[0], edge_b))
+        distances = lib_polehydra_distances_squared
+            (edge_a[0], edge_b),
+        first_b_at = search(min(distances), distances)[0]
     ) lib_polehydra_triangles_between_edges(
         edge_a, edge_b, a_offset, b_offset,
         0, first_b_at, 0, first_b_at,
@@ -130,22 +123,22 @@ function lib_polehydra_cover_toroid(edges) =
             (edges[0], last, 0, len_to_last)
     );
 
-function lib_polehydra_concat_points_of_all_edges(edges, at = 0) =
+function lib_polehydra_gather_all_points(edges, at = 0) =
     at < len(edges) ? concat(
         edges[at],
-        lib_polehydra_concat_points_of_all_edges(edges, at + 1)
+        lib_polehydra_gather_all_points(edges, at + 1)
     ) : [];
 
 module lib_polehydra_spheroid(edges) {
     polyhedron(
-        lib_polehydra_concat_points_of_all_edges(edges),
+        lib_polehydra_gather_all_points(edges),
         lib_polehydra_cover_spheroid(edges)
     );
 }
 
 module lib_polehydra_toroid(edges) {
     polyhedron(
-        lib_polehydra_concat_points_of_all_edges(edges),
+        lib_polehydra_gather_all_points(edges),
         lib_polehydra_cover_toroid(edges)
     );
 }
